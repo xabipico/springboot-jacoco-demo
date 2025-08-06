@@ -47,3 +47,4 @@ jobs:
           min-coverage-changed-files: 60
           title: Jacoco Report
           update-comment: true
+          skip-if-no-changes: true
