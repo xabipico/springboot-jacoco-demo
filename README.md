@@ -9,31 +9,10 @@ Este es un proyecto de ejemplo con **Spring Boot**, que incluye:
 
 ---
 
-## 🚀 Cómo ejecutar
+## 🚀 Jacoco report con comentario en PR
 
-### 1. Ejecutar pruebas unitarias
+[Action Jacoco report](https://github.com/marketplace/actions/jacoco-report)
 
-    mvn clean verify
-
-### 2. Ejecutar también pruebas de integración
-
-    mvn clean verify -P integration-tests
-
-
-## Reportes de cobertura
-
-Después de ejecutar los tests, JaCoCo generará los reportes en:
-
-    target/site/jacoco/index.html
-
-Ábrelo en tu navegador para ver la cobertura de clases, métodos, líneas e instrucciones.
-
-## Dependencias
-
-Este proyecto usa:
-
-- Java 21
-- Spring Boot Starter
-- Spring Boot Starter Test
-- JaCoCo (v0.8.11)
-- Maven Failsafe Plugin para pruebas de integración
+Si se sube un commit a un PR abierta. Pasa los test y genera un comentario con el reporte.
+Se puede elegir si crear un nuevo comentario por cada commit o si editar el anterior comentario.
+El reporte muestra el coverage total del proyecto y el coverage de cada archivo modificado.

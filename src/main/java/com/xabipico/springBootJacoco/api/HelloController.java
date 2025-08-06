@@ -12,4 +12,19 @@ public class HelloController {
     public String greetings() {
         return "Greetings from Spring Boot!";
     }
+
+    @GetMapping(value = "/kaixo")
+    public String kaixo() {
+        return "Kaixo from Spring Boot!";
+    }
+
+    @GetMapping(value = "/iep")
+    public String iep() {
+        return "Iep from Spring Boot!";
+    }
+
+    @GetMapping(value = "/bestebat")
+    public String bestebat() {
+        return "bestebat from Spring Boot!";
+    }
 }

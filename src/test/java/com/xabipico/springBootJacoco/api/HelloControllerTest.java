@@ -22,4 +22,16 @@ public class HelloControllerTest {
         mvc.perform(MockMvcRequestBuilders.get("/home/greetings").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    public void getKaixo() throws Exception {
+        mvc.perform(MockMvcRequestBuilders.get("/home/kaixo").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void getIpe() throws Exception {
+        mvc.perform(MockMvcRequestBuilders.get("/home/iep").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
 }

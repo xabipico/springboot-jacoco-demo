@@ -13,4 +13,10 @@ public class GreetingServiceTest {
         String result = service.greet("Alice");
         assertEquals("Hello, Alice!", result);
     }
+
+    @Test
+    void testKaixo() {
+        String result = service.kaixo("Alice");
+        assertEquals("Kaixo, Alice!", result);
+    }
 }
