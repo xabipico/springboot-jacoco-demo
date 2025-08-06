@@ -1,6 +1,7 @@
 name: Jacoco report on PR commnent
 
 on:
+  pull_request:
   push:
     branches:
       - jacoco-report
