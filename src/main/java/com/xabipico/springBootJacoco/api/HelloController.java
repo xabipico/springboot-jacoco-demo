@@ -17,4 +17,9 @@ public class HelloController {
     public String kaixo() {
         return "Kaixo from Spring Boot!";
     }
+
+    @GetMapping(value = "/iep")
+    public String iep() {
+        return "Iep from Spring Boot!";
+    }
 }
