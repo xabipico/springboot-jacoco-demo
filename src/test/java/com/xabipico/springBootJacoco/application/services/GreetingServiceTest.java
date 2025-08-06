@@ -17,6 +17,6 @@ public class GreetingServiceTest {
     @Test
     void testKaixo() {
         String result = service.kaixo("Alice");
-        assertEquals("kaixo, Alice!", result);
+        assertEquals("Kaixo, Alice!", result);
     }
 }
