@@ -31,8 +31,13 @@ jobs:
             ${{ runner.os }}-maven
 
       - name: Ejecutar tests con cobertura
-        run: mvn clean verify -Pcoverage
-        working-directory: ./${{ env.REST_FOLDER }}
+        run: mvn clean verify
+      
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: report.xml
+          path: ${{ github.workspace }}/target/site/jacoco/jacoco.xml
 
       - name: Add coverage to PR in comment
         id: jacoco
