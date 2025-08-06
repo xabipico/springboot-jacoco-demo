@@ -22,4 +22,9 @@ public class HelloController {
     public String iep() {
         return "Iep from Spring Boot!";
     }
+
+    @GetMapping(value = "/bestebat")
+    public String bestebat() {
+        return "bestebat from Spring Boot!";
+    }
 }
