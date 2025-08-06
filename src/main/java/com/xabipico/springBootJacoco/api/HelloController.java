@@ -12,4 +12,9 @@ public class HelloController {
     public String greetings() {
         return "Greetings from Spring Boot!";
     }
+
+    @GetMapping(value = "/kaixo")
+    public String kaixo() {
+        return "Kaixo from Spring Boot!";
+    }
 }
