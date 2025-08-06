@@ -33,7 +33,7 @@ jobs:
         run: mvn clean verify -Pcoverage
         working-directory: ./${{ env.REST_FOLDER }}
 
-      - name: Add coverage to PR
+      - name: Add coverage to PR in comment
         id: jacoco
         uses: madrapps/jacoco-report@v1.7.2
         with:
