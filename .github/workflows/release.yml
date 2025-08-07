@@ -1,0 +1,130 @@
+name: Build, Release y Cerrar Milestone
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  issues: write
+
+env:
+  JAR_NAME_PREFIX: "demo"
+  FOLDER_NAME: "."
+
+jobs:
+  build_and_upload_artifacts:
+    name: Build y subir artifacts
+    runs-on: ubuntu-latest
+
+    outputs:
+      TAG_RELEASE: ${{ steps.extract-tag.outputs.TAG_RELEASE }}
+      MILESTONE_NAME: ${{ steps.milestone.outputs.MILESTONE_NAME }}
+      MILESTONE_ID: ${{ steps.milestone.outputs.MILESTONE_ID }}
+
+    steps:
+      - name: Checkout al repositorio
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 Zulu
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+          cache: maven
+
+      - name: Cache Maven
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven
+
+      - name: Extraer tag y versión
+        id: extract-tag
+        run: |
+          TAG_NAME="${GITHUB_REF_NAME}"
+          echo "Release del tag: $TAG_NAME"
+          echo "TAG_RELEASE=$TAG_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Obtener milestone correspondiente
+        id: milestone
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Buscando milestone para versión: $VERSION"
+
+          RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json"  "https://api.github.com/repos/${{ github.repository }}/milestones?state=open")
+
+          MILESTONE_TITLE=$(echo "$RESPONSE" | jq -r --arg v "$VERSION" '.[] | select(.title | startswith($v)) | .title')
+          MILESTONE_ID=$(echo "$RESPONSE" | jq -r --arg v "$VERSION" '.[] | select(.title | startswith($v)) | .number')
+
+          if [ -z "$MILESTONE_TITLE" ] || [ "$MILESTONE_TITLE" = "null" ]; then
+            echo "⚠️ Milestone no encontrada para versión $VERSION"
+            MILESTONE_TITLE="$TAG_NAME"
+            MILESTONE_ID=""
+          fi
+
+          echo "🎯 Milestone detectada: $MILESTONE_TITLE (ID: $MILESTONE_ID)"
+          echo "MILESTONE_NAME=$MILESTONE_TITLE" >> "$GITHUB_OUTPUT"
+          echo "MILESTONE_ID=$MILESTONE_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        run: |
+          mvn clean package -DskipTests
+          JAR_FILE=$(ls target/*.jar | head -n 1)
+          FINAL_JAR="target/${{ env.JAR_NAME_PREFIX }}-${{ steps.extract-tag.outputs.TAG_RELEASE }}.jar"
+          mv "$JAR_FILE" "$FINAL_JAR"
+        working-directory: ${{ env.FOLDER_NAME }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.JAR_NAME_PREFIX }}-${{ steps.extract-tag.outputs.TAG_RELEASE }}.jar
+          path: ${{ env.FOLDER_NAME }}/target/${{ env.JAR_NAME_PREFIX }}-${{ steps.extract-tag.outputs.TAG_RELEASE }}.jar
+          retention-days: 1
+
+  create_release:
+    name: Crear release y subir assets
+    runs-on: ubuntu-latest
+    needs: build_and_upload_artifacts
+
+    steps:
+      - name: Descargar JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.JAR_NAME_PREFIX }}-${{ needs.build_and_upload_artifacts.outputs.TAG_RELEASE }}.jar
+          path: ./
+
+      - name: Crear Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.build_and_upload_artifacts.outputs.TAG_RELEASE }}
+          name: ${{ needs.build_and_upload_artifacts.outputs.MILESTONE_NAME }}
+          generate_release_notes: true
+          append_body: true
+          files: |
+            ${{ env.JAR_NAME_PREFIX }}-${{ needs.build_and_upload_artifacts.outputs.TAG_RELEASE }}.jar
+
+  close_milestone:
+    name: Cerrar Milestone
+    runs-on: ubuntu-latest
+    needs: build_and_upload_artifacts
+
+    if: needs.build_and_upload_artifacts.outputs.MILESTONE_ID != ''
+
+    steps:
+      - name: Cerrar milestone
+        run: |
+          MILESTONE_ID="${{ needs.build_and_upload_artifacts.outputs.MILESTONE_ID }}"
+          echo "🔒 Cerrando milestone con ID: $MILESTONE_ID..."
+
+          RESPONSE=$(curl -s -X PATCH             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}"             -H "Accept: application/vnd.github.v3+json"             -d '{"state":"closed"}'             "https://api.github.com/repos/${{ github.repository }}/milestones/$MILESTONE_ID")
+
+          if ! echo "$RESPONSE" | jq -e . > /dev/null; then
+            echo "❌ Falló el cierre del milestone"
+            echo "$RESPONSE"
+            exit 1
+          fi
+
+          echo "🎉 Milestone cerrado exitosamente."
