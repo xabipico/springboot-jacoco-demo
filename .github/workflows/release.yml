@@ -22,6 +22,7 @@ jobs:
       TAG_RELEASE: ${{ steps.extract-tag.outputs.TAG_RELEASE }}
       MILESTONE_NAME: ${{ steps.milestone.outputs.MILESTONE_NAME }}
       MILESTONE_ID: ${{ steps.milestone.outputs.MILESTONE_ID }}
+      TEST_COVERAGE: ${{ steps.coverage.outputs.TEST_COVERAGE }}
 
     steps:
       - name: Checkout al repositorio
@@ -71,11 +72,28 @@ jobs:
 
       - name: Build
         run: |
-          mvn clean package -DskipTests
+          mvn clean verify
           JAR_FILE=$(ls target/*.jar | head -n 1)
           FINAL_JAR="target/${{ env.JAR_NAME_PREFIX }}-${{ steps.extract-tag.outputs.TAG_RELEASE }}.jar"
           mv "$JAR_FILE" "$FINAL_JAR"
         working-directory: ${{ env.FOLDER_NAME }}
+
+      - name: Extraer cobertura de tests
+        id: coverage
+        run: |
+          XML_FILE="${{ env.FOLDER_NAME }}/target/site/jacoco/jacoco.xml"
+          
+          if [[ -f "$XML_FILE" ]]; then
+            COVERAGE=$(xmllint --xpath "string(//report/counter[@type='INSTRUCTION']/@covered)" "$XML_FILE")
+            MISSED=$(xmllint --xpath "string(//report/counter[@type='INSTRUCTION']/@missed)" "$XML_FILE")
+            TOTAL=$((COVERAGE + MISSED))
+            PERCENT=$((100 * COVERAGE / TOTAL))
+            echo "Cobertura: $PERCENT%"
+            echo "TEST_COVERAGE=$PERCENT" >> "$GITHUB_OUTPUT"
+          else
+            echo "⚠️ Archivo de cobertura no encontrado"
+            echo "TEST_COVERAGE=N/A" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -105,6 +123,28 @@ jobs:
           append_body: true
           files: |
             ${{ env.JAR_NAME_PREFIX }}-${{ needs.build_and_upload_artifacts.outputs.TAG_RELEASE }}.jar
+
+      - name: Añadir cobertura de tests a la release
+        run: |
+          TAG="${{ needs.build_and_upload_artifacts.outputs.TAG_RELEASE }}"
+          COVERAGE="${{ needs.build_and_upload_artifacts.outputs.TEST_COVERAGE }}"
+
+          RELEASE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/$TAG")
+
+          RELEASE_ID=$(echo "$RELEASE" | jq -r .id)
+          CURRENT_BODY=$(echo "$RELEASE" | jq -r .body)
+
+          NEW_BODY="$CURRENT_BODY
+
+          🧪 **Cobertura de tests:** $COVERAGE%"
+
+          curl -s -X PATCH \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d "$(jq -n --arg body "$NEW_BODY" '{body: $body}')" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID"
+
 
   close_milestone:
     name: Cerrar Milestone
