@@ -101,7 +101,7 @@ jobs:
 
           TEST_REPORT="${{ env.FOLDER_NAME }}/target/surefire-reports"
           if [[ -d "$TEST_REPORT" ]]; then
-            TEST_COUNT=$(grep -hEo 'Tests run: [0-9]+' "$TEST_REPORT"/TEST-*.txt | awk '{s+=$3} END {print s}')
+            TEST_COUNT=$(grep -hEo 'Tests run: [0-9]+' "$TEST_REPORT"/*.txt | awk '{s+=$3} END {print s}')
             if [ -z "$TEST_COUNT" ]; then
               TEST_COUNT=0
             fi
