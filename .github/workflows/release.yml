@@ -25,6 +25,9 @@ jobs:
       TEST_COVERAGE: ${{ steps.coverage.outputs.TEST_COVERAGE }}
 
     steps:
+      - name: Instalar xmllint (libxml2-utils)
+        run: sudo apt-get update && sudo apt-get install -y libxml2-utils
+        
       - name: Checkout al repositorio
         uses: actions/checkout@v4
 
