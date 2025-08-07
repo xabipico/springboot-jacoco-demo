@@ -2,8 +2,8 @@ name: Build, Release y Cerrar Milestone
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - '#3-release-notas-cobertura'
 
 permissions:
   contents: write
