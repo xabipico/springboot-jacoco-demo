@@ -153,7 +153,7 @@ jobs:
 
           NEW_BODY="$CURRENT_BODY
           ---
-          **Cantidad de test ejecutados:** $TESTS"
+          **Cantidad de test ejecutados:** $TESTS
           **Porcentaje de cobertura:** $COVERAGE%"
 
           curl -s -X PATCH \
