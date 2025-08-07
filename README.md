@@ -9,6 +9,7 @@ Este es un proyecto de ejemplo con **Spring Boot**, que incluye:
 
 ---
 
+
 ## 🚀 Cómo ejecutar
 
 ### 1. Ejecutar pruebas unitarias
