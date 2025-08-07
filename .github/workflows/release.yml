@@ -2,8 +2,8 @@ name: Build, Release y Cerrar Milestone
 
 on:
   push:
-    branches:
-      - '#3-release-notas-cobertura'
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
@@ -176,7 +176,7 @@ jobs:
           MILESTONE_ID="${{ needs.build_and_upload_artifacts.outputs.MILESTONE_ID }}"
           echo "🔒 Cerrando milestone con ID: $MILESTONE_ID..."
 
-          RESPONSE=$(curl -s -X PATCH             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}"             -H "Accept: application/vnd.github.v3+json"             -d '{"state":"closed"}'             "https://api.github.com/repos/${{ github.repository }}/milestones/$MILESTONE_ID")
+          RESPONSE=$(curl -s -X PATCH -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" -d '{"state":"closed"}'             "https://api.github.com/repos/${{ github.repository }}/milestones/$MILESTONE_ID")
 
           if ! echo "$RESPONSE" | jq -e . > /dev/null; then
             echo "❌ Falló el cierre del milestone"
